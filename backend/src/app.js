@@ -21,8 +21,10 @@ app.use(compression());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://icosystem.com'] 
-    : ['http://localhost:3000', 'http://localhost:3001'],
-  credentials: true
+    : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3001'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 const limiter = rateLimit({

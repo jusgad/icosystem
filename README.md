@@ -929,19 +929,19 @@ Añade cualquier otro contexto sobre el problema aquí.
 
 ### Roadmap
 
-#### Q1 2024
+#### Q1 2025
 - [ ] Implementación de tests unitarios completos
 - [ ] Integración con más APIs de videoconferencia
 - [ ] Dashboard avanzado de analytics
 - [ ] Notificaciones push
 
-#### Q2 2024
+#### Q2 2026
 - [ ] Aplicación móvil (React Native)
 - [ ] API GraphQL
 - [ ] Integración con sistemas ERP
 - [ ] Módulo de pagos
 
-#### Q3 2024
+#### Q3 2026
 - [ ] IA para recomendaciones
 - [ ] Integración con redes sociales
 - [ ] Marketplace de servicios
@@ -951,28 +951,9 @@ Añade cualquier otro contexto sobre el problema aquí.
 
 Este proyecto está licenciado bajo la Licencia MIT - ve el archivo [LICENSE](LICENSE) para más detalles.
 
-## 📞 Soporte
-
-### Documentación Adicional
-- [Guía de Instalación Detallada](docs/installation-guide.md)
-- [Manual de Usuario](docs/user-manual.md)
-- [Documentación Técnica](docs/technical-documentation.md)
-- [Guía de Contribución](docs/contributing-guide.md)
-
-### Contacto
-- **Email**: soporte@icosystem.com
-- **Slack**: [Canal de la Comunidad](https://icosystem.slack.com)
-- **Issues**: [GitHub Issues](https://github.com/tu-usuario/icosystem/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/tu-usuario/icosystem/discussions)
-
 ### Links Útiles
 - [Documentación de Firebase](https://firebase.google.com/docs)
 - [Documentación de Google APIs](https://developers.google.com/apis-explorer)
 - [Material-UI Components](https://mui.com/components/)
 - [Chart.js Documentation](https://www.chartjs.org/docs/)
 
----
-
-**Desarrollado con ❤️ para la comunidad emprendedora**
-
-[⬆ Volver al inicio](#-icosystem---plataforma-de-gestión-integral-de-emprendimientos)

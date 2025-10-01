@@ -1,9 +1,8 @@
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
-const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
 require('dotenv').config();
 
 const { connectDB } = require('./config/database');
@@ -14,29 +13,90 @@ const documentRoutes = require('./routes/documents');
 const meetingRoutes = require('./routes/meetings');
 const reportRoutes = require('./routes/reports');
 
+// Importar middleware de seguridad
+const {
+  helmetConfig,
+  sanitizeInput,
+  detectAttacks,
+  sanitizeError,
+  securityHeaders,
+  rateLimiters
+} = require('./middleware/security');
+
+const logger = require('./utils/logger');
+
 const app = express();
 
-app.use(helmet());
+// Seguridad headers
+app.use(helmetConfig);
+app.use(securityHeaders);
+
+// Compression
 app.use(compression());
+
+// CORS configuration
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? (process.env.ALLOWED_ORIGINS || 'https://icosystem.com').split(',')
+  : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3001'];
+
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://icosystem.com'] 
-    : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3001'],
+  origin: (origin, callback) => {
+    // Permitir requests sin origin (mobile apps, postman, etc)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) === -1) {
+      logger.warn('CORS blocked request from origin', { origin });
+      return callback(new Error('Not allowed by CORS'), false);
+    }
+    return callback(null, true);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  maxAge: 600 // 10 minutos
 }));
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: 'Too many requests from this IP'
-});
-app.use(limiter);
+// Rate limiting general
+app.use(rateLimiters.general);
 
-app.use(morgan('combined'));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+// Request logging
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+} else {
+  app.use(morgan('combined', {
+    stream: {
+      write: (message) => logger.info(message.trim())
+    }
+  }));
+}
+
+// Body parsing con límites
+app.use(express.json({
+  limit: '10mb',
+  verify: (req, res, buf) => {
+    req.rawBody = buf.toString();
+  }
+}));
+app.use(express.urlencoded({
+  extended: true,
+  limit: '10mb',
+  parameterLimit: 1000
+}));
+
+// Sanitización de inputs
+app.use(mongoSanitize({
+  replaceWith: '_',
+  onSanitize: ({ req, key }) => {
+    logger.warn('Request sanitized', {
+      ip: req.ip,
+      key,
+      path: req.path
+    });
+  }
+}));
+app.use(sanitizeInput);
+app.use(detectAttacks);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/entrepreneur', entrepreneurRoutes);
@@ -53,17 +113,18 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// 404 handler
 app.use((req, res) => {
+  logger.warn('404 - Route not found', {
+    path: req.path,
+    method: req.method,
+    ip: req.ip
+  });
   res.status(404).json({ error: 'Route not found' });
 });
 
-app.use((error, req, res, next) => {
-  console.error('Global error handler:', error);
-  res.status(500).json({ 
-    error: 'Internal server error',
-    message: process.env.NODE_ENV === 'development' ? error.message : undefined
-  });
-});
+// Global error handler con sanitización
+app.use(sanitizeError);
 
 const PORT = process.env.PORT || 3000;
 

@@ -2,28 +2,55 @@ const { Document, User, Entrepreneur } = require('../models');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
+const crypto = require('crypto');
+const { validatePath, validateFileType, securityLogger } = require('../middleware/security');
+const { sanitizeFilename } = require('../middleware/validation');
+const logger = require('../utils/logger');
+
+// Directorio seguro de uploads (fuera del código fuente)
+const UPLOAD_BASE_PATH = process.env.UPLOAD_PATH || path.join(__dirname, '../../uploads');
 
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
-    const uploadPath = process.env.UPLOAD_PATH || './uploads';
-    const userFolder = path.join(uploadPath, req.user.id);
-    
     try {
+      // Crear estructura de carpetas por año/mes/usuario para mejor organización
+      const date = new Date();
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+
+      const userFolder = path.join(UPLOAD_BASE_PATH, String(year), month, req.user.id);
+
+      // Validar que la ruta no escape del directorio permitido
+      validatePath(userFolder, UPLOAD_BASE_PATH);
+
       await fs.mkdir(userFolder, { recursive: true });
       cb(null, userFolder);
     } catch (error) {
+      logger.error('Error creating upload directory', { error: error.message, userId: req.user.id });
       cb(error, null);
     }
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const extension = path.extname(file.originalname);
-    const filename = file.fieldname + '-' + uniqueSuffix + extension;
-    cb(null, filename);
+    try {
+      // Sanitizar el nombre original
+      const sanitizedOriginal = sanitizeFilename(file.originalname);
+      const extension = path.extname(sanitizedOriginal);
+      const nameWithoutExt = path.basename(sanitizedOriginal, extension);
+
+      // Generar nombre único y seguro
+      const uniqueId = crypto.randomBytes(16).toString('hex');
+      const timestamp = Date.now();
+      const filename = `${nameWithoutExt.substring(0, 50)}-${timestamp}-${uniqueId}${extension}`;
+
+      cb(null, filename);
+    } catch (error) {
+      logger.error('Error generating filename', { error: error.message });
+      cb(error, null);
+    }
   }
 });
 
-const fileFilter = (req, file, cb) => {
+const fileFilter = async (req, file, cb) => {
   const allowedTypes = [
     'application/pdf',
     'application/msword',
@@ -38,17 +65,38 @@ const fileFilter = (req, file, cb) => {
     'text/plain'
   ];
 
-  if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Tipo de archivo no permitido'), false);
+  // Validar MIME type
+  if (!allowedTypes.includes(file.mimetype)) {
+    securityLogger('Rejected file upload - invalid MIME type', {
+      mimetype: file.mimetype,
+      originalname: file.originalname
+    }, req);
+    return cb(new Error('Tipo de archivo no permitido'), false);
   }
+
+  // Validar extensión
+  const ext = path.extname(file.originalname).toLowerCase();
+  const allowedExtensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.jpg', '.jpeg', '.png', '.gif', '.txt'];
+
+  if (!allowedExtensions.includes(ext)) {
+    securityLogger('Rejected file upload - invalid extension', {
+      extension: ext,
+      originalname: file.originalname
+    }, req);
+    return cb(new Error('Extensión de archivo no permitida'), false);
+  }
+
+  cb(null, true);
 };
 
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: parseInt(process.env.MAX_FILE_SIZE) || 10485760 // 10MB
+    fileSize: parseInt(process.env.MAX_FILE_SIZE) || 10485760, // 10MB
+    files: 1, // Solo un archivo a la vez
+    fields: 10,
+    fileSize: 10485760,
+    parts: 100
   },
   fileFilter: fileFilter
 });
@@ -184,24 +232,51 @@ class DocumentController {
       }
 
       // Check permissions
-      const canAccess = 
+      const canAccess =
         req.user.role === 'super_user' ||
         document.uploadedById === req.user.id ||
         (req.user.role === 'ally' && document.entrepreneur?.assignedAllyId === req.user.id) ||
         (req.user.role === 'client' && document.isPublic);
 
       if (!canAccess) {
+        securityLogger('Unauthorized document download attempt', {
+          documentId: id,
+          userId: req.user.id,
+          userRole: req.user.role
+        }, req);
         return res.status(403).json({ error: 'Access denied' });
       }
 
       try {
-        await fs.access(document.filePath);
-        res.download(document.filePath, document.filename);
+        // Validar que el path es seguro
+        const safePath = validatePath(document.filePath, UPLOAD_BASE_PATH);
+
+        // Verificar que el archivo existe
+        await fs.access(safePath);
+
+        // Log de descarga para auditoría
+        logger.info('Document downloaded', {
+          documentId: id,
+          userId: req.user.id,
+          filename: document.filename
+        });
+
+        // Configurar headers de seguridad para descarga
+        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(document.filename)}"`);
+        res.setHeader('Content-Type', document.fileType);
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+
+        res.download(safePath, document.filename);
       } catch (fileError) {
+        logger.error('File not found on server', {
+          documentId: id,
+          filePath: document.filePath,
+          error: fileError.message
+        });
         return res.status(404).json({ error: 'File not found on server' });
       }
     } catch (error) {
-      console.error('Download document error:', error);
+      logger.error('Download document error', { error: error.message, documentId: req.params.id });
       res.status(500).json({ error: 'Failed to download document' });
     }
   }

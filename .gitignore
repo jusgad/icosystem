@@ -1,0 +1,108 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+*.log
+
+# Production
+/build
+/dist
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+*.swp
+*.swo
+*~
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.iml
+
+# Uploads
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Firebase
+*-firebase-adminsdk-*.json
+firebase-debug.log
+.firebase/
+
+# Google
+credentials.json
+token.json
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+
+# Build
+*.tgz
+*.tar.gz
+
+# Cache
+.cache/
+.parcel-cache/
+.npm/
+.eslintcache
+.stylelintcache
+
+# Temporary files
+*.tmp
+*.temp
+.temp/
+.tmp/
+
+# Editor directories and files
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Certificate files
+*.pem
+*.key
+*.cert
+*.crt
+
+# Sensitive data
+*secret*
+*password*
+*.credentials
+
+# pm2
+.pm2/
+ecosystem.config.js
+
+# Docker
+docker-compose.override.yml
+
+# Misc
+.vercel
+.terraform/
+*.tfstate
+*.tfstate.backup

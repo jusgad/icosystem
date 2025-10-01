@@ -30,6 +30,7 @@ import {
   Visibility,
 } from '@mui/icons-material';
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
+import { reportAPI } from '../../services/api';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -103,24 +104,14 @@ const ImpactDashboard: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch impact metrics
-      const metricsResponse = await fetch(`/api/reports/impact-metrics?currency=${currency}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        }
-      });
-      const metricsData = await metricsResponse.json();
-      setMetrics(metricsData.metrics);
-      setStageDistribution(metricsData.stageDistribution);
+      // Fetch impact metrics usando reportAPI
+      const metricsResponse = await reportAPI.getImpactMetrics({ currency });
+      setMetrics(metricsResponse.data.metrics);
+      setStageDistribution(metricsResponse.data.stageDistribution);
 
       // Fetch entrepreneur directory
-      const directoryResponse = await fetch('/api/reports/entrepreneur-directory', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        }
-      });
-      const directoryData = await directoryResponse.json();
-      setDirectory(directoryData.directory);
+      const directoryResponse = await reportAPI.getEntrepreneurDirectory();
+      setDirectory(directoryResponse.data.directory);
 
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -132,25 +123,21 @@ const ImpactDashboard: React.FC = () => {
 
   const downloadProgressReport = async () => {
     try {
-      const response = await fetch('/api/reports/progress-report?format=csv', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        }
-      });
-      
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'reporte-progreso.csv';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-      }
+      const response = await reportAPI.generateProgressReport({ format: 'csv' });
+
+      // Crear blob y descargar
+      const blob = new Blob([response.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `reporte-progreso-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading report:', error);
+      setError('Error al descargar el reporte');
     }
   };
 

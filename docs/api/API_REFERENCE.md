@@ -1,921 +1,388 @@
-# 📚 ICOsystem API Reference
+# 🔌 Referencia de API - ICOsystem
 
-## 🔗 Base URL
-- **Development**: `http://localhost:3000/api`
-- **Production**: `https://api.icosystem.com/api`
+## URL Base
 
-## 🔐 Authentication
+```
+Desarrollo: http://localhost:3000/api
+Producción: https://api.tudominio.com/api
+```
 
-Todas las rutas requieren autenticación vía Firebase Token excepto las rutas públicas.
+## Autenticación
 
-### Headers Requeridos
+Todas las rutas excepto `/health` requieren autenticación mediante Token ID de Firebase:
+
 ```http
 Authorization: Bearer <firebase-id-token>
-Content-Type: application/json
 ```
 
-### Obtener Token
-```javascript
-// Frontend - Obtener token de Firebase
-import { auth } from './config/firebase';
+---
 
-const user = auth.currentUser;
-if (user) {
-  const token = await user.getIdToken();
-  // Usar token en requests
-}
-```
+## Endpoints
 
-## 📋 Endpoints por Módulo
+### 🔐 Autenticación (`/auth`)
 
-### 🔐 Authentication (`/api/auth`)
+#### POST /auth/register
+Registrar nuevo usuario
 
-#### `POST /auth/register`
-Registra un nuevo usuario en el sistema.
-
-**Request Body:**
+**Cuerpo:**
 ```json
 {
   "token": "firebase-id-token",
-  "role": "entrepreneur|ally|client",
-  "additionalData": {
-    "personalInfo": {},
-    "isVulnerablePopulation": false,
-    "specialization": "string",
-    "experience": "string",
-    "expertise": ["string"],
-    "organization": "string",
-    "sector": "string",
-    "interests": ["string"]
-  }
+  "role": "entrepreneur|ally|client|super_user",
+  "additionalData": {}
 }
 ```
 
-**Response:**
+**Respuesta:** `200 OK`
 ```json
 {
-  "message": "User registered successfully",
-  "user": {
-    "id": "uuid",
-    "firebaseUid": "string",
-    "email": "string",
-    "name": "string",
-    "role": "entrepreneur",
-    "profilePicture": "string",
-    "isActive": true,
-    "entrepreneur": {
-      "id": "uuid",
-      "personalInfo": {},
-      "isVulnerablePopulation": false,
-      "currentStage": "ideacion",
-      "progressPercentage": 0,
-      "trainingHours": 0
-    }
-  }
+  "user": {...},
+  "message": "Usuario registrado exitosamente"
 }
 ```
 
-#### `POST /auth/login`
-Inicia sesión con token de Firebase.
+#### POST /auth/login
+Iniciar sesión
 
-**Request Body:**
+**Cuerpo:**
 ```json
 {
   "token": "firebase-id-token"
 }
 ```
 
-**Response:**
+**Respuesta:** `200 OK`
 ```json
 {
-  "message": "Login successful",
-  "user": {
-    "id": "uuid",
-    "firebaseUid": "string",
-    "email": "string",
-    "name": "string",
-    "role": "entrepreneur",
-    "profilePicture": "string",
-    "lastLogin": "2024-01-15T10:30:00Z"
-  }
+  "user": {...},
+  "message": "Inicio de sesión exitoso"
 }
 ```
 
-#### `GET /auth/profile`
-Obtiene el perfil del usuario autenticado.
+#### GET /auth/profile
+Obtener perfil del usuario autenticado
 
-**Response:**
+**Respuesta:** `200 OK`
 ```json
 {
-  "user": {
-    "id": "uuid",
-    "email": "string",
-    "name": "string",
-    "role": "entrepreneur",
-    "entrepreneur": {
-      "id": "uuid",
-      "currentStage": "ideacion",
-      "progressPercentage": 25,
-      "trainingHours": 10.5
-    }
-  }
+  "id": "uuid",
+  "email": "usuario@ejemplo.com",
+  "name": "Usuario",
+  "role": "entrepreneur",
+  "entrepreneur": {...}
 }
 ```
 
-#### `PUT /auth/profile`
-Actualiza el perfil del usuario.
+#### PUT /auth/profile
+Actualizar perfil
 
-**Request Body:**
+**Cuerpo:**
 ```json
 {
-  "name": "string",
-  "profilePicture": "string",
-  "additionalData": {
-    "personalInfo": {},
-    "specialization": "string"
-  }
+  "name": "Nuevo Nombre",
+  "profilePicture": "url"
 }
 ```
 
-### 🚀 Entrepreneur (`/api/entrepreneur`)
+---
 
-#### `GET /entrepreneur/dashboard`
-Obtiene datos del dashboard del emprendedor.
+### 🚀 Emprendedor (`/entrepreneur`)
 
-**Response:**
+#### GET /entrepreneur/dashboard
+Panel de control del emprendedor
+
+**Respuesta:** `200 OK`
 ```json
 {
-  "entrepreneur": {
-    "id": "uuid",
-    "currentStage": "ideacion",
-    "progressPercentage": 40,
-    "trainingHours": 15.5,
-    "user": {
-      "name": "John Doe",
-      "email": "john@example.com"
-    },
-    "assignedAlly": {
-      "name": "Jane Smith",
-      "email": "jane@example.com"
-    }
-  },
-  "progress": {
-    "percentage": 40,
-    "currentStage": "ideacion",
-    "trainingHours": 15.5
-  },
-  "investment": {
-    "totalHours": 15.5,
-    "costPerHour": 6000,
-    "totalInvestment": 93000
-  },
-  "upcomingMeetings": [
-    {
-      "id": "uuid",
-      "title": "Sesión de Mentoría",
-      "startTime": "2024-01-20T14:00:00Z",
-      "status": "scheduled"
-    }
-  ]
+  "entrepreneur": {...},
+  "progress": 45,
+  "currentStage": "ideacion",
+  "trainingHours": 10,
+  "upcomingMeetings": [...],
+  "unreadMessages": 3
 }
 ```
 
-#### `PUT /entrepreneur/lifecycle`
-Actualiza el formulario de ciclo de vida.
+#### PUT /entrepreneur/lifecycle
+Actualizar formulario de ciclo de vida
 
-**Request Body:**
+**Cuerpo:**
 ```json
 {
   "stage": "ideacion",
   "responses": {
-    "problem": "Dificultad para encontrar parking",
+    "problem": "Descripción del problema",
     "validation": true,
     "prototype": false
   }
 }
 ```
 
-**Response:**
+#### GET /entrepreneur/lifecycle/questions
+Obtener preguntas por etapa
+
+**Consulta:** `?stage=ideacion`
+
+**Respuesta:** `200 OK`
 ```json
 {
-  "message": "Lifecycle form updated successfully",
-  "entrepreneur": {
-    "id": "uuid",
-    "currentStage": "ideacion",
-    "progressPercentage": 60,
-    "lifecycleResponses": {
-      "ideacion": {
-        "problem": "Dificultad para encontrar parking",
-        "validation": true,
-        "prototype": false
-      }
-    }
-  },
-  "progress": 60
+  "stage": "ideacion",
+  "questions": [...]
 }
 ```
 
-#### `GET /entrepreneur/lifecycle/questions`
-Obtiene las preguntas del formulario de ciclo de vida.
+---
 
-**Response:**
+### 📅 Reuniones (`/meetings`)
+
+#### GET /meetings
+Listar reuniones
+
+**Consulta:**
+- `page`: número de página (predeterminado: 1)
+- `limit`: resultados por página (predeterminado: 10)
+- `status`: scheduled|completed|cancelled
+
+**Respuesta:** `200 OK`
 ```json
 {
-  "questions": {
-    "ideacion": [
-      {
-        "id": "problem",
-        "question": "¿Cuál es el problema principal que resuelve?",
-        "type": "text"
-      },
-      {
-        "id": "validation",
-        "question": "¿Ha validado la necesidad?",
-        "type": "boolean"
-      }
-    ],
-    "preincubacion": [...]
-  }
-}
-```
-
-### 📅 Meetings (`/api/meetings`)
-
-#### `GET /meetings`
-Lista reuniones del usuario.
-
-**Query Parameters:**
-- `page` (number): Página (default: 1)
-- `limit` (number): Elementos por página (default: 20)
-- `status` (string): Filtrar por estado
-- `startDate` (string): Fecha de inicio (ISO 8601)
-- `endDate` (string): Fecha de fin (ISO 8601)
-
-**Response:**
-```json
-{
-  "meetings": [
-    {
-      "id": "uuid",
-      "title": "Sesión de Mentoría",
-      "description": "Revisión de plan de negocio",
-      "startTime": "2024-01-15T14:00:00Z",
-      "endTime": "2024-01-15T15:00:00Z",
-      "googleMeetLink": "https://meet.google.com/abc-defg-hij",
-      "status": "scheduled",
-      "organizer": {
-        "id": "uuid",
-        "name": "Jane Smith",
-        "email": "jane@example.com"
-      },
-      "entrepreneur": {
-        "id": "uuid",
-        "user": {
-          "name": "John Doe",
-          "email": "john@example.com"
-        }
-      }
-    }
-  ],
+  "meetings": [...],
   "pagination": {
-    "total": 50,
+    "total": 25,
     "page": 1,
-    "limit": 20,
-    "totalPages": 3
+    "pages": 3
   }
 }
 ```
 
-#### `POST /meetings`
-Crea una nueva reunión.
+#### POST /meetings
+Crear reunión
 
-**Request Body:**
+**Body:**
 ```json
 {
   "title": "Sesión de Mentoría",
   "description": "Revisión de plan de negocio",
-  "startTime": "2024-01-20T14:00:00Z",
-  "endTime": "2024-01-20T15:00:00Z",
+  "startTime": "2025-01-15T10:00:00Z",
+  "endTime": "2025-01-15T11:00:00Z",
   "entrepreneurId": "uuid",
-  "attendees": ["email1@example.com", "email2@example.com"],
-  "createGoogleMeet": true,
-  "accessToken": "google-oauth-token"
+  "createGoogleMeet": true
 }
 ```
 
-**Response:**
+**Response:** `201 Created`
 ```json
 {
-  "message": "Meeting created successfully",
   "meeting": {
     "id": "uuid",
-    "title": "Sesión de Mentoría",
-    "googleMeetLink": "https://meet.google.com/abc-defg-hij",
-    "organizer": {
-      "name": "Jane Smith"
-    }
+    "googleMeetLink": "https://meet.google.com/...",
+    ...
   }
 }
 ```
 
-#### `PUT /meetings/:id`
-Actualiza una reunión existente.
+#### PUT /meetings/:id
+Actualizar reunión
 
-**Request Body:**
+**Body:**
 ```json
 {
-  "title": "Sesión de Mentoría Actualizada",
+  "title": "Nuevo título",
   "status": "completed",
-  "notes": "Se revisó el plan de negocio completamente",
-  "trainingHours": 1.5
+  "trainingHours": 2
 }
 ```
 
-#### `DELETE /meetings/:id`
-Elimina una reunión.
+#### DELETE /meetings/:id
+Eliminar reunión
 
-**Response:**
-```json
-{
-  "message": "Meeting deleted successfully"
-}
-```
+**Response:** `200 OK`
 
-#### `GET /meetings/upcoming`
-Obtiene próximas reuniones del usuario.
+---
 
-**Query Parameters:**
-- `limit` (number): Número máximo de reuniones (default: 5)
+### 💬 Messages (`/messages`)
 
-#### `GET /meetings/entrepreneurs`
-Obtiene emprendedores disponibles para asignar reuniones (solo Aliados y Super Usuarios).
+#### GET /messages/conversations
+Listar conversaciones
 
-### 💬 Messages (`/api/messages`)
-
-#### `GET /messages/conversations`
-Lista conversaciones del usuario.
-
-**Response:**
+**Response:** `200 OK`
 ```json
 {
   "conversations": [
     {
-      "user": {
-        "id": "uuid",
-        "name": "John Doe",
-        "profilePicture": "string",
-        "role": "entrepreneur"
-      },
-      "lastMessage": {
-        "id": "uuid",
-        "content": "Hola, ¿cómo estás?",
-        "createdAt": "2024-01-15T10:30:00Z",
-        "sender": {
-          "name": "John Doe"
-        }
-      },
+      "user": {...},
+      "lastMessage": {...},
       "unreadCount": 2
     }
   ]
 }
 ```
 
-#### `GET /messages/:userId`
-Obtiene mensajes con un usuario específico.
+#### GET /messages/:userId
+Obtener mensajes con usuario
 
-**Query Parameters:**
-- `page` (number): Página (default: 1)
-- `limit` (number): Mensajes por página (default: 50)
+**Query:** `?limit=50&offset=0`
 
-**Response:**
+**Response:** `200 OK`
 ```json
 {
-  "messages": [
-    {
-      "id": "uuid",
-      "content": "Hola, ¿cómo va el proyecto?",
-      "createdAt": "2024-01-15T10:30:00Z",
-      "isRead": true,
-      "messageType": "text",
-      "sender": {
-        "id": "uuid",
-        "name": "Jane Smith",
-        "profilePicture": "string"
-      },
-      "receiver": {
-        "id": "uuid",
-        "name": "John Doe"
-      },
-      "attachments": []
-    }
-  ],
-  "pagination": {
-    "total": 100,
-    "page": 1,
-    "limit": 50,
-    "totalPages": 2
-  }
+  "messages": [...],
+  "pagination": {...}
 }
 ```
 
-#### `POST /messages`
-Envía un nuevo mensaje.
+#### POST /messages
+Enviar mensaje
 
-**Request Body:**
+**Body:**
 ```json
 {
   "receiverId": "uuid",
-  "content": "¡Hola! ¿Cómo va todo?",
-  "messageType": "text",
-  "attachments": ["file1.pdf", "file2.jpg"]
+  "content": "Hola, ¿cómo estás?",
+  "messageType": "text"
 }
 ```
 
-**Response:**
+#### PUT /messages/:id/read
+Marcar mensaje como leído
+
+---
+
+### 📁 Documents (`/documents`)
+
+#### GET /documents
+Listar documentos
+
+**Query:**
+- `page`, `limit`: paginación
+- `search`: búsqueda por texto
+- `type`: filtrar por tipo
+- `tags`: filtrar por etiquetas
+
+**Response:** `200 OK`
 ```json
 {
-  "message": "Message sent successfully",
-  "data": {
-    "id": "uuid",
-    "content": "¡Hola! ¿Cómo va todo?",
-    "createdAt": "2024-01-15T10:30:00Z",
-    "sender": {
-      "name": "Jane Smith"
-    }
-  }
+  "documents": [...],
+  "pagination": {...}
 }
 ```
 
-#### `PUT /messages/:messageId/read`
-Marca un mensaje como leído.
+#### POST /documents/upload
+Subir documento
 
-#### `GET /messages/search-users`
-Busca usuarios para iniciar conversaciones.
+**Body:** `multipart/form-data`
+- `document`: archivo (max 10MB)
+- `title`: título
+- `documentType`: tipo
+- `isPublic`: boolean
+- `tags`: string (separados por comas)
 
-**Query Parameters:**
-- `query` (string): Término de búsqueda
+**Response:** `201 Created`
 
-### 📁 Documents (`/api/documents`)
+#### PUT /documents/:id
+Actualizar metadatos
 
-#### `GET /documents`
-Lista documentos del usuario.
+#### GET /documents/:id/download
+Descargar documento
 
-**Query Parameters:**
-- `page` (number): Página
-- `limit` (number): Documentos por página
-- `type` (string): Tipo de documento
-- `tags` (string): Tags separados por comas
-- `search` (string): Búsqueda en título/nombre
+**Response:** `200 OK` (binary)
 
-**Response:**
-```json
-{
-  "documents": [
-    {
-      "id": "uuid",
-      "title": "Plan de Negocio",
-      "filename": "plan-negocio.pdf",
-      "fileSize": 1048576,
-      "fileType": "application/pdf",
-      "documentType": "business_plan",
-      "isPublic": false,
-      "tags": ["plan", "negocio", "2024"],
-      "createdAt": "2024-01-15T10:30:00Z",
-      "uploadedBy": {
-        "id": "uuid",
-        "name": "John Doe"
-      }
-    }
-  ],
-  "pagination": {
-    "total": 25,
-    "page": 1,
-    "limit": 20,
-    "totalPages": 2
-  }
-}
-```
+#### DELETE /documents/:id
+Eliminar documento
 
-#### `POST /documents/upload`
-Sube un nuevo documento.
+---
 
-**Request (Multipart/Form-Data):**
-```
-document: <file>
-title: "Plan de Negocio 2024"
-documentType: "business_plan"
-isPublic: "false"
-tags: "plan,negocio,2024"
-```
+### 📊 Reports (`/reports`)
 
-**Response:**
-```json
-{
-  "message": "Document uploaded successfully",
-  "document": {
-    "id": "uuid",
-    "title": "Plan de Negocio 2024",
-    "filename": "plan-negocio.pdf",
-    "filePath": "/uploads/user-id/document-uuid.pdf",
-    "documentType": "business_plan"
-  }
-}
-```
+#### GET /reports/impact-metrics
+Métricas de impacto
 
-#### `PUT /documents/:id`
-Actualiza metadatos del documento.
+**Query:** `?currency=COP|USD|EUR`
 
-**Request Body:**
-```json
-{
-  "title": "Plan de Negocio Actualizado",
-  "documentType": "business_plan",
-  "isPublic": true,
-  "tags": ["plan", "negocio", "actualizado"]
-}
-```
-
-#### `GET /documents/:id/download`
-Descarga un documento.
-
-**Response:** Archivo binario con headers apropiados.
-
-#### `DELETE /documents/:id`
-Elimina un documento.
-
-#### `GET /documents/types`
-Obtiene tipos de documento disponibles.
-
-**Response:**
-```json
-{
-  "types": [
-    {
-      "value": "business_plan",
-      "label": "Plan de Negocio"
-    },
-    {
-      "value": "financial_report",
-      "label": "Reporte Financiero"
-    }
-  ]
-}
-```
-
-### 📊 Reports (`/api/reports`)
-
-#### `GET /reports/impact-metrics`
-Obtiene métricas de impacto del sistema.
-
-**Query Parameters:**
-- `currency` (string): Moneda para conversión (COP, USD, EUR)
-- `startDate` (string): Fecha de inicio
-- `endDate` (string): Fecha de fin
-
-**Response:**
+**Response:** `200 OK`
 ```json
 {
   "metrics": {
-    "totalEntrepreneurs": 150,
-    "vulnerablePopulationCount": 75,
-    "vulnerablePopulationPercentage": 50,
-    "totalTrainingHours": 2250,
-    "totalInvestment": 13500000,
-    "totalMeetings": 300,
-    "completedMeetings": 250,
-    "completionRate": 83,
-    "totalDocuments": 450,
-    "publicDocuments": 150,
-    "baseCostPerSession": 60000,
+    "totalEntrepreneurs": 100,
+    "vulnerablePopulationPercentage": 45,
+    "totalTrainingHours": 500,
+    "totalInvestment": 30000000,
     "currency": "COP"
   },
-  "stageDistribution": {
-    "ideacion": 30,
-    "preincubacion": 40,
-    "incubacion": 35,
-    "aceleracion": 25,
-    "consolidacion": 20
-  },
-  "generatedAt": "2024-01-15T10:30:00Z"
+  "stageDistribution": {...}
 }
 ```
 
-#### `GET /reports/entrepreneur-directory`
-Obtiene directorio de emprendedores.
+#### GET /reports/entrepreneur-directory
+Directorio de emprendedores
 
-**Query Parameters:**
-- `search` (string): Búsqueda por nombre
-- `stage` (string): Filtrar por etapa
-- `isVulnerable` (boolean): Filtrar población vulnerable
-- `page`, `limit`: Paginación
-
-**Response:**
+**Response:** `200 OK`
 ```json
 {
   "directory": [
     {
       "id": "uuid",
-      "name": "John Doe",
-      "email": "john@example.com",
+      "name": "Emprendedor",
       "currentStage": "ideacion",
-      "progressPercentage": 40,
-      "trainingHours": 15.5,
-      "isVulnerablePopulation": true,
-      "assignedAlly": {
-        "name": "Jane Smith"
-      },
-      "createdAt": "2024-01-01T00:00:00Z"
+      "progressPercentage": 30,
+      ...
     }
-  ],
-  "pagination": {
-    "total": 150,
-    "page": 1,
-    "limit": 20,
-    "totalPages": 8
-  }
+  ]
 }
 ```
 
-#### `GET /reports/progress-report`
-Genera reporte de progreso.
+#### GET /reports/progress-report
+Generar reporte de progreso
 
-**Query Parameters:**
-- `startDate` (string): Fecha de inicio
-- `endDate` (string): Fecha de fin
-- `format` (string): Formato de salida (json, csv)
+**Query:** `?format=csv|json`
 
-**Response (JSON):**
-```json
-{
-  "report": [
-    {
-      "id": "uuid",
-      "name": "John Doe",
-      "email": "john@example.com",
-      "currentStage": "ideacion",
-      "progressPercentage": 40,
-      "trainingHours": 15.5,
-      "totalMeetings": 8,
-      "completedMeetings": 6,
-      "completionRate": 75,
-      "lastUpdate": "2024-01-15T10:30:00Z"
-    }
-  ],
-  "summary": {
-    "totalEntrepreneurs": 150,
-    "averageProgress": 45,
-    "totalTrainingHours": 2250,
-    "vulnerablePopulation": 75
-  },
-  "generatedAt": "2024-01-15T10:30:00Z"
-}
-```
+**Response:** `200 OK` (CSV o JSON)
 
-**Response (CSV):** Archivo CSV con los datos del reporte.
+---
 
-#### `GET /reports/activity-metrics`
-Obtiene métricas de actividad del sistema.
+## Códigos de Estado
 
-**Query Parameters:**
-- `period` (number): Días de actividad (default: 30)
+- `200 OK` - Operación exitosa
+- `201 Created` - Recurso creado
+- `400 Bad Request` - Datos inválidos
+- `401 Unauthorized` - No autenticado
+- `403 Forbidden` - Sin permisos
+- `404 Not Found` - Recurso no existe
+- `429 Too Many Requests` - Rate limit excedido
+- `500 Internal Server Error` - Error del servidor
 
-## 🚨 Códigos de Error
+## Rate Limiting
 
-### Error Response Format
-```json
-{
-  "error": "Descripción del error",
-  "code": "ERROR_CODE",
-  "details": {
-    "field": "valor específico del error"
-  }
-}
-```
+- **Auth:** 5 requests / 15 min
+- **General:** 100 requests / 15 min
+- **Upload:** 20 requests / hora
+- **Messaging:** 30 requests / min
+- **Reports:** 10 requests / min
 
-### Códigos de Estado HTTP
+## Ejemplos con cURL
 
-- **200**: OK - Solicitud exitosa
-- **201**: Created - Recurso creado exitosamente
-- **400**: Bad Request - Datos inválidos en la solicitud
-- **401**: Unauthorized - Token de autenticación requerido
-- **403**: Forbidden - Permisos insuficientes
-- **404**: Not Found - Recurso no encontrado
-- **409**: Conflict - Conflicto con el estado actual
-- **429**: Too Many Requests - Límite de rate limiting excedido
-- **500**: Internal Server Error - Error interno del servidor
-
-### Errores Comunes
-
-#### Authentication Errors
-```json
-{
-  "error": "Access token required",
-  "code": "AUTH_TOKEN_REQUIRED"
-}
-```
-
-```json
-{
-  "error": "Invalid or expired token",
-  "code": "AUTH_TOKEN_INVALID"
-}
-```
-
-```json
-{
-  "error": "Insufficient permissions",
-  "code": "AUTH_INSUFFICIENT_PERMISSIONS"
-}
-```
-
-#### Validation Errors
-```json
-{
-  "error": "Validation failed",
-  "code": "VALIDATION_ERROR",
-  "details": {
-    "email": "Email format is invalid",
-    "name": "Name is required"
-  }
-}
-```
-
-#### Business Logic Errors
-```json
-{
-  "error": "Entrepreneur profile not found",
-  "code": "ENTREPRENEUR_NOT_FOUND"
-}
-```
-
-```json
-{
-  "error": "Meeting cannot be scheduled in the past",
-  "code": "INVALID_MEETING_TIME"
-}
-```
-
-## 📝 Rate Limiting
-
-### Límites por Endpoint
-
-- **General**: 100 requests por 15 minutos por IP
-- **Upload**: 10 uploads por 60 minutos por usuario
-- **Messages**: 50 mensajes por 60 minutos por usuario
-- **Reports**: 20 requests por 60 minutos por usuario
-
-### Headers de Rate Limit
-```http
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 95
-X-RateLimit-Reset: 1642261800
-```
-
-## 🔧 Utilidades para Desarrollo
-
-### Postman Collection
-Importa la colección de Postman para probar todos los endpoints:
-[Download Collection](../examples/ICOsystem.postman_collection.json)
-
-### Curl Examples
-
-#### Autenticación
 ```bash
-curl -X POST "http://localhost:3000/api/auth/login" \
+# Login
+curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{
-    "token": "firebase-id-token"
-  }'
-```
+  -d '{"token": "firebase-token"}'
 
-#### Crear Reunión
-```bash
-curl -X POST "http://localhost:3000/api/meetings" \
+# Obtener dashboard
+curl http://localhost:3000/api/entrepreneur/dashboard \
+  -H "Authorization: Bearer firebase-token"
+
+# Crear reunión
+curl -X POST http://localhost:3000/api/meetings \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer firebase-id-token" \
+  -H "Authorization: Bearer firebase-token" \
   -d '{
-    "title": "Sesión de Mentoría",
-    "startTime": "2024-01-20T14:00:00Z",
-    "endTime": "2024-01-20T15:00:00Z",
-    "entrepreneurId": "uuid-del-emprendedor"
+    "title": "Mentoría",
+    "startTime": "2025-01-15T10:00:00Z",
+    "endTime": "2025-01-15T11:00:00Z",
+    "entrepreneurId": "uuid"
   }'
-```
-
-#### Subir Documento
-```bash
-curl -X POST "http://localhost:3000/api/documents/upload" \
-  -H "Authorization: Bearer firebase-id-token" \
-  -F "document=@plan-negocio.pdf" \
-  -F "title=Plan de Negocio" \
-  -F "documentType=business_plan" \
-  -F "tags=plan,negocio,2024"
-```
-
-### JavaScript SDK Examples
-
-#### Configuración del Cliente
-```javascript
-// services/api.js
-import axios from 'axios';
-import { auth } from '../config/firebase';
-
-const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Interceptor para autenticación
-api.interceptors.request.use(async (config) => {
-  const user = auth.currentUser;
-  if (user) {
-    const token = await user.getIdToken();
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-export default api;
-```
-
-#### Ejemplos de Uso
-```javascript
-// Obtener dashboard del emprendedor
-const getDashboard = async () => {
-  try {
-    const response = await api.get('/entrepreneur/dashboard');
-    return response.data;
-  } catch (error) {
-    console.error('Error:', error.response.data);
-    throw error;
-  }
-};
-
-// Actualizar ciclo de vida
-const updateLifecycle = async (stage, responses) => {
-  try {
-    const response = await api.put('/entrepreneur/lifecycle', {
-      stage,
-      responses
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error:', error.response.data);
-    throw error;
-  }
-};
-
-// Enviar mensaje
-const sendMessage = async (receiverId, content) => {
-  try {
-    const response = await api.post('/messages', {
-      receiverId,
-      content,
-      messageType: 'text'
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error:', error.response.data);
-    throw error;
-  }
-};
-```
-
-## 🧪 Testing
-
-### Test de Endpoints con Jest
-```javascript
-// tests/auth.test.js
-const request = require('supertest');
-const app = require('../src/app');
-
-describe('Auth Endpoints', () => {
-  test('POST /auth/login - should login successfully', async () => {
-    const response = await request(app)
-      .post('/api/auth/login')
-      .send({
-        token: 'valid-firebase-token'
-      });
-
-    expect(response.status).toBe(200);
-    expect(response.body.message).toBe('Login successful');
-    expect(response.body.user).toHaveProperty('id');
-  });
-
-  test('POST /auth/login - should fail with invalid token', async () => {
-    const response = await request(app)
-      .post('/api/auth/login')
-      .send({
-        token: 'invalid-token'
-      });
-
-    expect(response.status).toBe(401);
-    expect(response.body.error).toBe('Invalid token');
-  });
-});
 ```
 
 ---
 
-**📚 Esta documentación se actualiza constantemente. Para la versión más reciente, consulta el repositorio oficial.**
+**Última actualización:** Octubre 2025
